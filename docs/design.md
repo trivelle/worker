@@ -15,7 +15,7 @@ Below are some examples of what interacting with the CLI will be like
 
 ### Starting a process
 
-Users can start processes in the worker and are able to provide limits for memory, IO and CPU. These parameters are described more in depth in [Resource Control](#resource-control) section. The command returns
+Users can start processes in the worker host and are able to provide limits for memory, IO and CPU. These parameters are described more in depth in the [Resource Control](#resource-control) section. The command returns
 the UUID of the process which can be used to invoke further commands.
 
 ```
@@ -25,7 +25,7 @@ job 9de95676-84ed-4e37-b44c-4f4d1df7c74f started
 
 ### Stopping a process
 
-Users can stop a process running in the worker using the stop command and providing the job id.
+Users can stop a process running in the worker host using the stop command and providing the job id.
 
 ```
 > job stop 9de95676-84ed-4e37-b44c-4f4d1df7c74f
@@ -130,7 +130,7 @@ client and server certificates.
 
 Following the guidance from these RFCs:
 
-[Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)](https://www.ietf.org/archive/id/draft-ietf-uta-rfc7525bis-03.html#name-forward-secrecy https://www.rfc-editor.org/rfc/rfc8446.html)  
+[Recommendations for Secure Use of Transport Layer Security and Datagram Transport Layer Security (DTLS)](https://www.ietf.org/archive/id/draft-ietf-uta-rfc7525bis-03.html)
 
 [Hypertext Transfer Protocol Version 2 (HTTP/2) Appendix A](https://datatracker.ietf.org/doc/html/rfc7540#appendix-A)
 
