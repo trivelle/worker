@@ -4,13 +4,12 @@ package worker;
 option go_package = "github.com/trivelle/worker";
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
 
 service ProcessService {
   // Start starts a new process in the node
-  rpc Start(StartProcessRequest) returns (google.protobuf.Empty);
+  rpc Start(StartProcessRequest) returns (StartProcessResponse);
   // Stop stops a running process in the node
-  rpc Stop(StopProcessRequest) returns (google.protobuf.Empty);
+  rpc Stop(StopProcessRequest) returns (StopProcessResponse);
   // GetStatus returns the status of a process started in the node.
   // It does not include process output, to get the output of the command,
   // use GetOutput instead.
@@ -20,9 +19,16 @@ service ProcessService {
 }
 
 message StartProcessRequest {
-  // the command to be executed
+  // Command is the command to be executed together with its arguments
+  // For example, "go run cmd/main.go"
   string Command = 1;
   ResourceAllocation ResourceAllocation = 2;
+}
+
+message StartProcessResponse {
+  // ProcessID is the unique identifier that the worker uses to track the process
+  // This value is different from an OS pid.
+  string ProcessID = 1;
 }
 
 // ResourceAllocation contains parameters that control cgroup
@@ -52,13 +58,17 @@ message ResourceAllocation {
 message CPUBandwidth {
   // AllowedTimeQuotaMs is the allowed time quota in microseconds 
   // for which all processes collectively in a child group can run during one period 
-  int64 AllowedTimeQuotaMs = 1;
+  int64 AllowedTimeQuotaUs = 1;
   // PeriodLengthMs specifies the length of the period in microseconds 
-  int64 PeriodLengthMs = 2;
+  int64 PeriodLengthUs = 2;
 }
 
 message StopProcessRequest {
   string ProcessID = 1;
+}
+
+message StopProcessResponse {
+
 }
 
 message GetStatusRequest {
@@ -75,12 +85,11 @@ message Process {
   string ProcessID = 1;
   // PID is the OS PID 
   string PID = 2;
-  // Command is the command executed for this process
+  // Command is the command executed for this process together with its arguments
+  // For example, "go run cmd/main.go"
   string Command = 3;
-  // Status is a string representing the status of the process
-  // can be one of R, D, S, T or Z 
-  // see https://www.baeldung.com/linux/process-states#the-linux-process-states
-  string State = 4;
+  // State denotes the state of the process
+  ProcessState State = 4;
   // ExitCode is the exit code for the process
   int32 ExitCode = 5;
   // StartedBy is the username that started this process
@@ -91,7 +100,18 @@ message Process {
   google.protobuf.Timestamp FinishedAt = 8;
 }
 
+// ProcessState represents the state of the Linux process
+// see https://www.baeldung.com/linux/process-states#the-linux-process-states
+enum ProcessState {
+  RUNNING_OR_RUNNABLE = 0;
+  UNINTERRUPTIBLE_SLEEP = 1;
+  INTERRUPTABLE_SLEEP = 2;
+  STOPPED = 3;
+  ZOMBIE = 4;
+}
+
 // ProcessOutput stores a line of process output
+// It is a combination of stdout and stderr
 message ProcessOutput {
-  string Line = 1;
+  bytes Line = 1;
 }
