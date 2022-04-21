@@ -73,7 +73,7 @@ It is a requirement that the host runs Linux kernel 4.15 (or above) as that is t
 introduced.
 
 On startup, the worker will create a worker root cgroup which will optionally contain some 
-default values that can be provided via flags. For every process, we will create a new children of the
+default values that can be provided via flags. For every process, we will create a new child of the
 worker cgroup with the provided resource control values. 
 
 We will enable users to control memory, IO and CPU. We will achieve this by exposing
@@ -120,6 +120,28 @@ Both server and client will support TLS versions 1.2 and 1.3.
 The [grpc-go](https://github.com/grpc/grpc-go) package that we will be using to implement the server and client
 give direct access to the standard library's `tls.Config` struct so it should be relatively simple to verify both
 client and server certificates.
+
+### Required Certificate Attributes
+
+As recommended in [https://datatracker.ietf.org/doc/html/rfc5280#section-4.1.2.4](RFC5280) The following fields will be required for all certificates in issuer and subject names.
+
+* country,
+* organization,
+* organizational unit,
+* distinguished name qualifier,
+* state or province name,
+* common name (e.g., "Susan Housley"), and
+* serial number
+
+Additionally, all certificates should have an expiration date.
+
+### Certificate Hierarchy
+
+The diagram below shows the certificate hierarchy. A self signed root certificate belonging
+to the root CA will be signing the certificates for users and hosts. The host and user will
+need to have a copy of this root certificate in order to verify each other.
+
+![certificate-hierarchy](./certificate_hierarchy.png)
 
 ### Cipher Suites
 
@@ -179,7 +201,7 @@ When there is a request to start a new process, the following will happen:
 * The process PID will be written to the relevant `cgroup.procs` file
 
 When there is a request to stop a new process, the following will happen:
-* The process will be killed using https://pkg.go.dev/os#Process (we can retrieve the Process type via ProcessState)
+* The process will be killed using https://pkg.go.dev/os#Process.Kill (we can retrieve the Process type via ProcessState)
 
 ## Limitations
 
