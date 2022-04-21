@@ -69,9 +69,6 @@ test command output line 3
 
 We will use [cgroupsv2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html) to assign system resources to processes.
 
-For this feature, we can leverage a lot of the code that has already been written here: 
-https://github.com/gravitational/teleport/blob/55cbd0ac9747a2012ee0373c0e69c22495dce158/lib/cgroup/cgroup.go
-
 It is a requirement that the host runs Linux kernel 4.15 (or above) as that is the version when the cpu controller was
 introduced.
 
