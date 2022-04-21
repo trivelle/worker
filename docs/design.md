@@ -19,7 +19,7 @@ Users can start processes in the worker host and are able to provide limits for 
 the UUID of the process which can be used to invoke further commands.
 
 ```
-> job start –memMax=1000000 –maxRead=1000000 –maxWrite=1000000 –cpuBandwidth="200000 1000000" "scripts/release-docker.sh" 
+> job start –memMaxBytes=1000000 –maxReadBps=1000000 –maxWriteBps=1000000 –cpuBandwidth="200000 1000000" "scripts/release-docker.sh"
 job 9de95676-84ed-4e37-b44c-4f4d1df7c74f started
 ```
 
