@@ -52,9 +52,9 @@ Users can invoke the status command to get information about the process.
 
 ### Streaming the output of a process
 
-Users can invoke the output command to stream the output of a process in real time. It gets
-the output right from the start. The command terminates once there is no more output to read 
-i.e the process is done or has been terminated.
+Users can invoke the output command to stream the output of a process in real time (a combination
+of stdout and stderr). It gets the output right from the start. The command terminates once there
+is no more output to read i.e the process is done or has been terminated.
 
 ```
 > job output 9de95676-84ed-4e37-b44c-4f4d1df7c74f
