@@ -15,16 +15,42 @@ type Config struct {
 }
 
 // Worker is a Linux process manager
-// After initialising a Worker, a new process can be started by
-// calling Execute and calling Start() on the returned Exec instance.
-// An Exec currently running in the worker can be retrieved via
-// GetExec.
+// It keeps a registry of the execs that have
+// been requested
 type Worker struct {
 	resourceLimits ResourceLimits
 	execRegistry   *execRegistry
 }
 
-// New returns creates an instance of a Worker
+// ExecRequest represents a request to execute a Linux process in the worker
+type ExecRequest struct {
+	// Command is the command executed to be executed together with its arguments
+	Command string
+
+	// ResourceLimits specifies the resources that the process will have access to
+	// These translate to cgroup interface files configuration.
+	ResourceLimits ResourceLimits
+
+	RequestedBy string
+}
+
+// Exec represents something to be executed in the Worker
+// The only way to instantiate this type is via the Worker
+// Afterwards, the Exec type is the way to interact with the process.
+type Exec interface {
+	Command() string
+	ProcessId()
+	Start() error
+	Stop() error
+	PID() int
+	State() string
+	StartedAt() time.Time
+	StartedBy() string
+	FinishedAt() time.Time
+	GetOutputStreamer() (Streamer, error)
+}
+
+// NewWorker returns creates an instance of a Worker
 func NewWorker(cfg Config) *Worker {
 	return nil
 }
@@ -44,38 +70,7 @@ type ResourceLimits struct {
 	// ...
 }
 
-// ExecRequest represents a request to execute a Linux process in the worker
-type ExecRequest struct {
-	// Command is the command executed to be executed together with its arguments
-	Command string
-
-	// ResourceLimits specifies the resources that the process will have access to
-	// These translate to cgroup interface files configuration.
-	ResourceLimits ResourceLimits
-
-	RequestedBy string
-}
-
-// Exec represents a process that can be run in the Worker
-type Exec interface {
-	Command() string
-	ProcessId()
-	Start() error
-	Stop() error
-	Info() ExecInfo
-	GetOutputStreamer() (Streamer, error)
-}
-
-// ExecInfo provides information about the Exec
-type ExecInfo interface {
-	PID() int
-	State() string
-	StartedAt() time.Time
-	StartedBy() string
-	FinishedAt() time.Time
-}
-
-// Streamer is an interface used to stream output from a process
+// Streamer is an interface used to stream output from a Process
 // managed by the worker
 type Streamer interface {
 	// StreamProcessOuput returns a channel to receive ProcessOutputEntry
