@@ -190,7 +190,7 @@ For example, using the snippet below the users `hashi`, `mozart` and `simba` wou
 The service will include a worker library written in Go to manage and interact with Linux and Linux processes.
 Under the hood, this is what the GRPC server will use to fulfill requests.
 
-This design doc will not go into detail about the specific interfaces exposed by this library.
+A sketch of what this library might look like can be found here: [worker.go](worker.go)
 
 ## Process Life Cycle
 
