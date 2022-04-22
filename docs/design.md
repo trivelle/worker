@@ -192,6 +192,31 @@ Under the hood, this is what the GRPC server will use to fulfill requests.
 
 A sketch of what this library might look like can be found here: [worker.go](worker.go)
 
+### Output Streaming
+
+The following interface is used for output streaming:
+
+```go
+// Streamer is an interface used to stream output from a Process
+// managed by the worker
+type Streamer interface {
+	// StreamProcessOuput returns a channel to receive process output
+	// in real time. If any error are encountered during execution the error
+	// will be sent in the errorChan. Otherwise, outputChan only closes when
+	// process is done sending output
+	StreamProcessOutput() (outputChan <-chan ProcessOutputEntry, errChan <-chan error)
+}
+```
+
+* When a process is started, its output is buffered 
+* When a new Streamer is created, `outputChan` first receives output up to the
+present time and then is registered as a listener of process output. It continue listening
+until the process finishes or is killed (this would trigger channel closure). Synchronisation
+logic on buffering and forwarding will be needed to ensure that all `Streamer`s 
+receive the correctoutput without skipping or duplicates.	 
+* If a new Streamer is created after process is finished, same applies. Buffer will
+be in memory so output can still be sent while worker is running.
+
 ## Process Life Cycle
 
 When there is a request to start a new process, the following will happen:

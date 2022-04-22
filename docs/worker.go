@@ -73,9 +73,10 @@ type ResourceLimits struct {
 // Streamer is an interface used to stream output from a Process
 // managed by the worker
 type Streamer interface {
-	// StreamProcessOuput returns a channel to receive ProcessOutputEntry
-	// in real time. If any error are encountered during execution the
-	// channel will be closed and error will be sent through the error channel.
+	// StreamProcessOuput returns a channel to receive process output
+	// in real time. If any error are encountered during execution the error
+	// will be sent in the errorChan. Otherwise, outputChan only closes when
+	// process is done sending output
 	StreamProcessOutput() (outputChan <-chan ProcessOutputEntry, errChan <-chan error)
 }
 
