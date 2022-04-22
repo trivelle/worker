@@ -208,12 +208,13 @@ type Streamer interface {
 }
 ```
 
-* When a process is started, its output is buffered 
+* When a process is started, a new goroutine is spanwed that buffers output
+and forwards to listeners. 
 * When a new Streamer is created, `outputChan` first receives output up to the
 present time and then is registered as a listener of process output. It continue listening
 until the process finishes or is killed (this would trigger channel closure). Synchronisation
 logic on buffering and forwarding will be needed to ensure that all `Streamer`s 
-receive the correctoutput without skipping or duplicates.	 
+receive the correct output without skipping or duplicates.	 
 * If a new Streamer is created after process is finished, same applies. Buffer will
 be in memory so output can still be sent while worker is running.
 
