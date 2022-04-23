@@ -190,7 +190,89 @@ For example, using the snippet below the users `hashi`, `mozart` and `simba` wou
 The service will include a worker library written in Go to manage and interact with Linux and Linux processes.
 Under the hood, this is what the GRPC server will use to fulfill requests.
 
-A sketch of what this library might look like can be found here: [worker.go](worker.go)
+A sketch of what this library could look like is below:
+
+```go
+// Worker is a Linux process manager
+// It keeps a registry of the processes that it
+// been requested to manage in memory.
+type Worker struct {
+	defaultresourceLimits ResourceLimits
+	execRegistry          map[ID]*ProcessHandle
+}
+
+// ID is the internal ID that the worker uses to identify an Exec
+// Under the hood this might just be a UUID
+type ID string
+
+type ResourceLimits struct {
+	MaxMemoryBytes int64
+	// ...
+}
+
+// ProcessRequest represents a request to execute a Linux process in the worker
+type ProcessRequest struct {
+	// Command is the command executed to be executed together with its arguments
+	Command string
+
+	// ResourceLimits specifies the resources that the process will have access to
+	// These translate to cgroup interface files configuration.
+	ResourceLimits ResourceLimits
+
+	RequestedBy string
+}
+
+// StartProcess starts a new process and adds it to the worker
+// process registry. It does not wait for the process to terminate.
+func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
+	// ...
+}
+
+// StopProcess stops a process currently managed by the worker
+// Returns an error if there was any issues stopping the process
+// or the process does not exist in the worker registry.
+func (w *Worker) StopProcess(processId ID) error {
+	// ...
+}
+
+// ProcessInfo gives access to information about a
+// process.
+type ProcessInfo interface {
+	PID() int
+	StartedBy() string
+	State() string
+	StartedAt() time.Time
+	FinishedAt() time.Time
+}
+
+// GetProcessInfo gives access to the ProcessInfo interface
+// which allows querying for information about the process.
+func (w *Worker) GetProcessInfo(processId ID) ProcessInfo {
+	// ...
+}
+
+// StreamProcessOutput returns an instance of a Streamer that
+// can be used to stream the combined stdout and stderr of
+// a process managed by the worker
+func (w *Worker) StreamProcessOutput(processId ID) Streamer {
+	// ...
+}
+
+type ProcessOutputEntry struct {
+	Content    []byte
+	ReceivedAt time.Time
+}
+
+// Streamer is an interface used to stream output from a Process
+// managed by the worker
+type Streamer interface {
+	// StreamProcessOuput returns a channel to receive process output
+	// in real time. If any error are encountered during execution the error
+	// will be sent in the errorChan. Otherwise, outputChan only closes when
+	// process is done sending output
+	StreamProcessOutput() (outputChan <-chan ProcessOutputEntry, errChan <-chan error)
+}
+```
 
 ### Output Streaming
 
