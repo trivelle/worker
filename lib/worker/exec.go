@@ -10,10 +10,17 @@ import (
 
 // Exec represents something to be executed in the Worker
 type Exec interface {
+	// Command is the command for the exec.
 	Command() string
+	// Start starts the exec.
 	Start() error
+	// Stop stops the exec.
 	Stop() error
+	// PID returns the pid of the process once it has been started.
+	// Otherwise, and invalid pid 0 is returned.
 	PID() int
+	// Status returns the ProcessStatus struct corresponding
+	// to the started exec.
 	Status() (*ProcessStatus, error)
 }
 
@@ -62,7 +69,27 @@ func (p *Process) PID() int {
 	return p.cmd.Process.Pid
 }
 
-// retrieveProcessState retrieves the Linux process state
+func (p *Process) Status() (*ProcessStatus, error) {
+	if p.cmd.Process == nil {
+		return nil, fmt.Errorf("process not started")
+	}
+	pid := p.PID()
+	state, err := retrieveProcessState(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProcessStatus{
+		PID:        pid,
+		StartedBy:  p.startedBy,
+		State:      state,
+		StartedAt:  p.startedAt,
+		FinishedAt: p.finishedAt,
+	}, nil
+}
+
+// retrieveProcessState retrieves the Linux process state i.e.
+// one of R, D, S, T or Z.
 func retrieveProcessState(pid int) (string, error) {
 	statPath := fmt.Sprintf("/proc/%d/stat", pid)
 	dataBytes, err := ioutil.ReadFile(statPath)
@@ -83,20 +110,4 @@ func retrieveProcessState(pid int) (string, error) {
 	state := splittedData[0]
 
 	return state, nil
-}
-
-func (p *Process) Status() (*ProcessStatus, error) {
-	pid := p.PID()
-	state, err := retrieveProcessState(pid)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ProcessStatus{
-		PID:        pid,
-		StartedBy:  p.startedBy,
-		State:      state,
-		StartedAt:  p.startedAt,
-		FinishedAt: p.finishedAt,
-	}, nil
 }

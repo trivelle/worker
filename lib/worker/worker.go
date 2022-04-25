@@ -1,12 +1,13 @@
+// Package worker provides interfaces to manage Linux processes
 package worker
 
 import (
 	"fmt"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/trivelle/worker/lib/config"
 )
 
 // Worker is a Linux process manager
@@ -15,6 +16,7 @@ import (
 type Worker struct {
 	resourceLimits  ResourceLimits
 	processRegistry map[ID]*ProcessHandle
+	mu              *sync.RWMutex
 }
 
 // ProcessRequest represents a request to execute a Linux process in the worker
@@ -33,12 +35,13 @@ type ProcessRequest struct {
 	RequestedBy string
 }
 
-// NewWorker returns creates an instance of a Worker
-func NewWorker(cfg config.Config) *Worker {
+// NewWorker creates an instance of a Worker
+func NewWorker(cfg Config) *Worker {
 	registry := make(map[ID]*ProcessHandle)
 	return &Worker{
 		// resourceLimits: cfg.resourceLimitsDefault,
 		processRegistry: registry,
+		mu:              &sync.RWMutex{},
 	}
 }
 
@@ -87,7 +90,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 
 	id := ID(uuid.NewString())
 
-	outputHandler, err := NewOutputStreamer(stdout, stderr)
+	outputHandler, err := NewOutputHandler(stdout, stderr)
 	if err != nil {
 		return "", err
 	}
@@ -97,20 +100,35 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 		outputHandler: outputHandler,
 	}
 
-	w.processRegistry[id] = processHandle
+	w.addToRegistry(id, processHandle)
 	return id, nil
 }
 
 // getExec extracts an Exec instance from the process registry
 func (w *Worker) getExec(processId ID) (Exec, error) {
-	if handle, ok := w.processRegistry[processId]; ok {
+	if handle, ok := w.getFromRegistry(processId); ok {
 		return handle.exec, nil
 	}
 	return nil, fmt.Errorf("no process with ID %s", processId)
 }
 
+// addToRegistry adds a new process handle to the registry
+func (w *Worker) addToRegistry(processId ID, processHandle *ProcessHandle) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.processRegistry[processId] = processHandle
+}
+
+// getFromRegistry retrieves a process handle from the registry
+func (w *Worker) getFromRegistry(processId ID) (*ProcessHandle, bool) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	val, ok := w.processRegistry[processId]
+	return val, ok
+}
+
 // StopProcess stops a process currently managed by the worker
-// Returns an error if there was any issues stopping the process
+// Returns an error if errors are encountered stopping the process
 // or the process does not exist in the worker registry.
 func (w *Worker) StopProcess(processId ID) error {
 	exec, err := w.getExec(processId)
