@@ -152,6 +152,5 @@ func (w *Worker) GetProcessStatus(processId ID) (*ProcessStatus, error) {
 // can be used to stream the combined stdout and stderr of
 // a process managed by the worker
 func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, chan error) {
-	outputChan := w.processRegistry[processId].outputHandler.AddListener()
-	return outputChan, nil
+	return w.processRegistry[processId].outputHandler.AddListener()
 }
