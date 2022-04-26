@@ -143,6 +143,14 @@ The [grpc-go](https://github.com/grpc/grpc-go) package that we will be using to 
 give direct access to the standard library's `tls.Config` struct so it should be relatively simple to verify both
 client and server certificates.
 
+### Public Keys
+
+Following the guidance from:
+
+[Recommendations for Secure Use of Transport Layer Security and Datagram Transport Layer Security (DTLS)](https://www.ietf.org/archive/id/draft-ietf-uta-rfc7525bis-03.html#section-4.5)
+
+We will use RSA with at least a 2048-bit modulus for the public key.
+
 ### Required Certificate Attributes
 
 As recommended in [https://datatracker.ietf.org/doc/html/rfc5280#section-4.1.2.4](RFC5280) The following fields will be required for all certificates in issuer and subject names.
