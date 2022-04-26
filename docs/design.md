@@ -186,15 +186,9 @@ All TLS 1.3 supported cipher suites satisfy these conditions and thus, can be ne
 
 ### Authorisation
 
-For authorisation, a simple all-or-nothing mechanism will be used. The server can be started with a list of OS users that are allowed to make requests.
-
 X.509 certificates issued to users will have information about the user name encoded in them in the Common Name subject field. The server will then use this information to decide if a requester has been given permission to make requests.
 
-For example, using the snippet below the users `hashi`, `mozart` and `simba` would be able to make requests to the GRPC API.
-
-```
-./worker --allowedUsers=hashi,mozart,simba
-```
+Users may only interact with jobs they started themselves.
 
 ## Worker Library
 
@@ -309,8 +303,6 @@ When there is a request to stop a new process, the following will happen:
 ## Limitations
 
 * No Role Based Access Control (RBAC), so there is no distinction between users that can perform different actions. For example, we might want users to be able to look at command output but not start or stop processes. A future improvement could be to also encode a role in the certificate in a similar way to how [Teleport does it](https://github.com/gravitational/teleport/blob/57cc2ed3554811dbfa4f33d23c58a7850148d504/lib/tlsca/ca.go#L93).
-
-* Authorised users can only be provided on startup and are kept in memory so any updates would require restarting the worker.
 
 * In Linux, there are many cgroup interface files available and a lot of flexibility in how to 
 manage resource allocation. The cgroup interface files we will be using were chosen as a proof

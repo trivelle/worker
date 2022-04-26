@@ -111,8 +111,8 @@ enum ProcessState {
   ZOMBIE = 4;
 }
 
-// ProcessOutput stores a line of process output
+// ProcessOutput stores a chunk of process output
 // It is a combination of stdout and stderr
 message ProcessOutput {
-  bytes Line = 1;
+  bytes Content = 1;
 }
