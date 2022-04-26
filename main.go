@@ -33,9 +33,9 @@ func main() {
 	for i := 0; i < 10; i++ {
 		i := i
 		time.Sleep(time.Millisecond)
+		outputChan, _, _ := w.StreamProcessOutput(id)
 		go func() {
-			ouputChan, _ := w.StreamProcessOutput(id)
-			for line := range ouputChan {
+			for line := range outputChan {
 				fmt.Printf("got output in %d: %s\n", i, string(line.Content))
 			}
 			wg.Done()

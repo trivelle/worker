@@ -108,6 +108,14 @@ func (w *Worker) getExec(processId ID) (Exec, error) {
 	return nil, fmt.Errorf("no process with ID %s", processId)
 }
 
+// getOutputHandler extracts an output handler instance from the process registry
+func (w *Worker) getOutputHandler(processId ID) (*OutputHandler, error) {
+	if handle, ok := w.getFromRegistry(processId); ok {
+		return handle.outputHandler, nil
+	}
+	return nil, fmt.Errorf("no process with ID %s", processId)
+}
+
 // addToRegistry adds a new process handle to the registry
 func (w *Worker) addToRegistry(processId ID, processHandle *ProcessHandle) {
 	w.mu.Lock()
@@ -147,6 +155,11 @@ func (w *Worker) GetProcessStatus(processId ID) (*ProcessStatus, error) {
 // StreamProcessOutput returns an instance of a Streamer that
 // can be used to stream the combined stdout and stderr of
 // a process managed by the worker
-func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, chan error) {
-	return w.processRegistry[processId].outputHandler.Stream()
+func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, chan error, error) {
+	outputHandler, err := w.getOutputHandler(processId)
+	if err != nil {
+		return nil, nil, err
+	}
+	outChan, errChan := outputHandler.Stream()
+	return outChan, errChan, nil
 }
