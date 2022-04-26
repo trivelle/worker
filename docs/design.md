@@ -103,6 +103,28 @@ This enables the distribution of CPU time by adjusting CPU bandwidth.
 The file contains 2 value which represent the allowed time quota (microseconds) and the 
 period length (microseconds).
 
+### Resource Exhaustion
+
+When IO and CPU limits are exceeded processes will take a longer time and users will notice that the process state is UNINTERRUPTIBLE_SLEEP/ INTERRUPTABLE_SLEEP for far too long. It will be on the user  to stop the process and retry with more resources.
+
+In the case of Memory limits, the behaviour of `memory.max` is:
+
+>  If a cgroup’s memory usage reaches this limit and can’t be reduced, the OOM killer is invoked in the cgroup. Under certain circumstances, the usage may go over the limit temporarily.
+
+This manifests as:
+
+```
+dl@pop-os:# sleep 120
+Killed
+```
+
+Kernel Logs:
+```
+Apr 21 14:29:06 pop-os kernel: [178228.853564] sleep invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+Apr 21 14:29:06 pop-os kernel: [178228.853656]  oom_kill_process.cold+0xb/0x10
+Apr 21 14:29:06 pop-os kernel: [178228.853968] oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/testing_stuff,task_memcg=/testing_stuff,task=sleep,pid=420326,uid=0
+```
+
 ## GRPC API
 
 The service exposes a gRPC API that gives capabilities to start a process, stop a process, get process status and stream process output.
