@@ -85,7 +85,7 @@ func NewOutputHandler(rc ...io.Reader) (*OutputHandler, error) {
 // there the process the output is coming from is finished.
 // Any errors encountered during output reading are sent through
 // the errors channel.
-func (o *OutputHandler) Stream() (chan ProcessOutputEntry, chan error) {
+func (o *OutputHandler) Stream() (<-chan ProcessOutputEntry, <-chan error) {
 	output := make(chan ProcessOutputEntry)
 	errChan := make(chan error)
 
