@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package worker;
+option go_package = "github.com/trivelle/worker";
+
+import "google/protobuf/timestamp.proto";
+
+service ProcessService {
+  // Start starts a new process in the node
+  rpc Start(StartProcessRequest) returns (StartProcessResponse);
+  // Stop stops a running process in the node
+  rpc Stop(StopProcessRequest) returns (StopProcessResponse);
+  // GetStatus returns the status of a process started in the node.
+  // It does not include process output, to get the output of the command,
+  // use GetOutput instead.
+  rpc GetStatus(GetStatusRequest) returns (Process);
+  // GetOutput streams the output of a process started in the node 
+  rpc GetOutput(GetOutputRequest) returns (stream ProcessOutput);
+}
+
+message StartProcessRequest {
+  // Command is the command to be executed
+  string Command = 1;
+  // Args are the arguments for the commands
+  repeated string Args = 2;
+  ResourceAllocation ResourceAllocation = 3;
+}
+
+message StartProcessResponse {
+  // ProcessID is the unique identifier that the worker uses to track the process
+  // This value is different from an OS pid.
+  string ProcessID = 1;
+}
+
+// ResourceAllocation contains parameters that control cgroup
+// interface files within the cgroup the process will be allocated to.
+// For more information see https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+message ResourceAllocation {
+  // CpuBandwidth controls the cpu.max interface file in the cgroup
+  // It specifies the distribution of CPU time by adjusting CPU bandwidth
+  CPUBandwidth CPUBandwidth = 1;
+  // MemoryMax controls the memory.max interface file in the cgroup
+  // It specifies memory usage hard limit for the process
+  int64 MemoryMaxBytes = 2;
+  // MemoryHigh controls the memory.high interface file in the cgroup.bool
+  // It specifies memory usage throtle limit for the process
+  int64 MemoryHighBytes = 3;
+  // MaxReadyBytesPerSecond controls the rbps key in the io.max interface file in the cgroup
+  // Note that the device this limit applies to is configured server side so this
+  // parameter should only specify the bytes per second
+  int64 MaxReadBytesPerSecond = 4;
+  // MaxWriteBytesPerSecond controls the wbps key in the io.max file in the cgroup
+  // Note that the device this limit applies to is configured server side so this
+  // parameter should only specify the bytes per second.
+  int64 MaxWriteBytesPerSecond = 5;
+}
+
+// CpuBandwidth enables the distribution of CPU time by adjusting CPU bandwidth
+message CPUBandwidth {
+  // AllowedTimeQuotaMs is the allowed time quota in microseconds 
+  // for which all processes collectively in a child group can run during one period 
+  int64 AllowedTimeQuotaUs = 1;
+  // PeriodLengthMs specifies the length of the period in microseconds 
+  int64 PeriodLengthUs = 2;
+}
+
+message StopProcessRequest {
+  string ProcessID = 1;
+}
+
+message StopProcessResponse {
+
+}
+
+message GetStatusRequest {
+  string ProcessID = 1;
+}
+
+message GetOutputRequest {
+  string ProcessID = 1;
+}
+
+// ProcessStatus stores information about a process
+message Process {
+  // ProcessID is a UUID that the server uses to identify this process
+  string ProcessID = 1;
+  // PID is the OS PID 
+  string PID = 2;
+  // Command is the command executed for this process together with its arguments
+  // For example, "go run cmd/main.go"
+  string Command = 3;
+  // State denotes the state of the process
+  ProcessState State = 4;
+  // ExitCode is the exit code for the process
+  int32 ExitCode = 5;
+  // StartedBy is the username that started this process
+  string StartedBy = 6;
+  // StartedAt is the time this process was started at
+  google.protobuf.Timestamp StartedAt = 7;
+  // FinishedAt is the time this process was finished at
+  google.protobuf.Timestamp FinishedAt = 8;
+}
+
+// ProcessState represents the state of the Linux process
+// see https://www.baeldung.com/linux/process-states#the-linux-process-states
+enum ProcessState {
+  RUNNING_OR_RUNNABLE = 0;
+  UNINTERRUPTIBLE_SLEEP = 1;
+  INTERRUPTABLE_SLEEP = 2;
+  STOPPED = 3;
+  ZOMBIE = 4;
+}
+
+// ProcessOutput stores a chunk of process output
+// It is a combination of stdout and stderr
+message ProcessOutput {
+  bytes Content = 1;
+}
