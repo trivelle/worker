@@ -35,6 +35,8 @@ import (
 type OutputHandler struct {
 	listeners []*Listener
 	// readers is the readers that the output handler is extracting output from
+	// the readers slice is initialised on the constructor and should never
+	// change afterwards
 	readers []io.Reader
 	// combinedBuffer keeps the combined output, this is used to forward to
 	// new listeners that came in late
