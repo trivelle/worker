@@ -10,8 +10,8 @@ import (
 // OutputHandler manages output buffering and forwarding to
 // concurrent output listeners.
 //
-// It is initialised with one or more readers and which it
-// buffers content from to then forward it to the listeners.
+// It is initialised with one or more readers which it
+// reads to buffer the content and send to listeners
 //
 // OutputHandler attempts to forward output by chunks of
 // length 76.
@@ -193,9 +193,9 @@ func (o *OutputHandler) handleOutput() error {
 	return nil
 }
 
-// bufferAndForwardChunks reads the reader line by line or if there
-// are no line breaks, it will stop at EOF. It buffers each line
-// and forwards it to the messages channel.
+// bufferAndForwardChunks reads the reader by 76 byte chunks
+// or it will stop at EOF. It buffers each chunk and forwards
+// it to the messages channel.
 func (o *OutputHandler) bufferAndForwardChunks(reader io.Reader) {
 	buf := make([]byte, 0, 76)
 	for {
