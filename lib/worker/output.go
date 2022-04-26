@@ -103,6 +103,8 @@ func (o *OutputHandler) addListener() (chan ProcessOutputEntry, chan error) {
 	output := make(chan ProcessOutputEntry, 1)
 	errChan := make(chan error)
 
+	// catch up on existing output but only send it if there
+	// is anything to send.
 	if len(o.combinedBuffer) > 0 {
 		output <- ProcessOutputEntry{Content: o.combinedBuffer}
 	}
