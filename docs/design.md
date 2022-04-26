@@ -137,7 +137,7 @@ The GRPC server will be calling methods in the worker library to interact with p
 
 The service will use mTLS to secure traffic and verify client and server authenticity. For this design document, we will make the assumption that the Certificate Authority (CA) can be trusted i.e. certificates are only issued to users and nodes that have been verified.
 
-Both server and client will support TLS versions 1.2 and 1.3.
+Both server and client will support TLS version 1.3.
 
 The [grpc-go](https://github.com/grpc/grpc-go) package that we will be using to implement the server and client
 give direct access to the standard library's `tls.Config` struct so it should be relatively simple to verify both
@@ -167,9 +167,9 @@ need to have a copy of this root certificate in order to verify each other.
 
 ### Cipher Suites
 
-#### TLS 1.2
+#### TLS 1.3
 
-Following the guidance from these RFCs:
+We will follow the guidance from these RFCs:
 
 [Recommendations for Secure Use of Transport Layer Security and Datagram Transport Layer Security (DTLS)](https://www.ietf.org/archive/id/draft-ietf-uta-rfc7525bis-03.html)
 
@@ -182,18 +182,7 @@ We will only accept cipher suites that match the following criteria:
 * No cipher suites which use static RSA i.e cipher suites starting with TLS_RSA_WITH_*
 * Cipher Suite is not blacklisted by HTTP/2
 
-This leaves us with the following cipher suites supported by the Go TLS package https://pkg.go.dev/crypto/tls :
-
-TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-
-#### TLS 1.3
-
-TLS 1.3 offers enhanced security over its predecessor, all its supported cipher suites can be negotiated.
+All TLS 1.3 supported cipher suites satisfy these conditions and thus, can be negotiated.
 
 ### Authorisation
 
