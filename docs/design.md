@@ -225,7 +225,7 @@ type ResourceLimits struct {
 type ProcessRequest struct {
 	// Command is the command executed to be executed
 	Command string
-	
+
 	// Args are the arguments for the command
 	Args []string
 
@@ -265,10 +265,11 @@ func (w *Worker) GetProcessInfo(processId ID) ProcessInfo {
 	// ...
 }
 
-// StreamProcessOutput returns an instance of a Streamer that
-// can be used to stream the combined stdout and stderr of
-// a process managed by the worker
-func (w *Worker) StreamProcessOutput(processId ID) Streamer {
+// StreamProcessOutput returns a channel to receive process output
+// in real time. If any errors are encountered during execution the error
+// will be sent in the errorChan. Otherwise, outputChan only closes when
+// process is done sending output
+func (w *Worker) StreamProcessOutput(processId ID) (outputChan <-chan ProcessOutputEntry, errChan <-chan error, err error) {
 	// ...
 }
 
@@ -277,15 +278,6 @@ type ProcessOutputEntry struct {
 	ReceivedAt time.Time
 }
 
-// Streamer is an interface used to stream output from a Process
-// managed by the worker
-type Streamer interface {
-	// StreamProcessOuput returns a channel to receive process output
-	// in real time. If any error are encountered during execution the error
-	// will be sent in the errorChan. Otherwise, outputChan only closes when
-	// process is done sending output
-	StreamProcessOutput() (outputChan <-chan ProcessOutputEntry, errChan <-chan error)
-}
 ```
 
 ### Output Streaming
