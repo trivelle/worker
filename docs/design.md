@@ -282,28 +282,17 @@ type ProcessOutputEntry struct {
 
 ### Output Streaming
 
-The following interface is used for output streaming:
-
-```go
-// Streamer is an interface used to stream output from a Process
-// managed by the worker
-type Streamer interface {
-	// StreamProcessOuput returns a channel to receive process output
-	// in real time. If any error are encountered during execution the error
-	// will be sent in the errorChan. Otherwise, outputChan only closes when
-	// process is done sending output
-	StreamProcessOutput() (outputChan <-chan ProcessOutputEntry, errChan <-chan error)
-}
-```
-
-* When a process is started, a new goroutine is spanwed that buffers output
-and forwards to listeners. 
-* When a new Streamer is created, `outputChan` first receives output up to the
-present time and then is registered as a listener of process output. It continue listening
-until the process finishes or is killed (this would trigger channel closure). Synchronisation
-logic on buffering and forwarding will be needed to ensure that all `Streamer`s 
-receive the correct output without skipping or duplicates.	 
-* If a new Streamer is created after process is finished, same applies. Buffer will
+* When a process is started, a new goroutine is spawned that buffers output
+and forwards new messages to listeners.
+* When `worker.StreamProcessOutput` output is called, a new listener is registered and the caller
+receives `outputChan` and `errChan` (see worker library sample above). Through the `outputChan`, all 
+the buffered output up to the present time is sent. `outputChan` then continues receiving new
+output until the process finishes or is killed (this would trigger channel closure). If there is any
+errors while reading output, it will be sent through `errChan`. To ensure that no output is lost
+during the transition from reading existing output to streaming new output all listeners and
+buffer operations must be behind a mutex. That is, we can't both add a new listener, send output to
+listeners and read the buffer. Only one of these things can happen at once.
+* If a `worker.StreamProcessOutput` is called after process is finished, same applies. Buffer will
 be in memory so output can still be sent while worker is running.
 
 ## Process Life Cycle
