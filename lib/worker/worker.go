@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"os/exec"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
 
 // Worker is a Linux process manager
-// It keeps a registry of the execs that have
-// been requested
+// It keeps a registry of processes that have been requested
+// and exposes methods to manage those.
 type Worker struct {
-	resourceLimits  ResourceLimits
 	processRegistry map[ID]*ProcessHandle
 	mu              *sync.RWMutex
 }
@@ -48,19 +46,17 @@ func NewWorker(cfg Config) *Worker {
 // ID is a unique ID that the worker uses to identify a process
 type ID string
 
+// ProcessHandle is a record of a process running in the worker
 type ProcessHandle struct {
 	process       Exec
 	outputHandler *OutputHandler
 }
 
+// ResourceLimits is a struct that holds requested resource limits
+// in a process request. These translate to cgroup interface files.
 type ResourceLimits struct {
 	MaxMemoryBytes int64
 	// ...
-}
-
-type ProcessOutputEntry struct {
-	Content    []byte
-	ReceivedAt time.Time
 }
 
 // StartProcess starts a new process and adds it to the worker

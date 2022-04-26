@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 )
 
 // OutputHandler manages output buffering and forwarding to
@@ -45,6 +46,13 @@ type OutputHandler struct {
 	// done is a channel to notify listeners that all output has been read
 	done chan struct{}
 	mu   *sync.Mutex
+}
+
+// ProcessOutputEntry is the struct sent to clients' channels
+// streaming output
+type ProcessOutputEntry struct {
+	Content    []byte
+	ReceivedAt time.Time
 }
 
 // Listener represents an output listener that the output handler will
