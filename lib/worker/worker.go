@@ -49,7 +49,7 @@ func NewWorker(cfg Config) *Worker {
 type ID string
 
 type ProcessHandle struct {
-	exec          Exec
+	process       Exec
 	outputHandler *OutputHandler
 }
 
@@ -77,11 +77,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 		return "", err
 	}
 
-	process := Process{
-		command:   req.Command,
-		cmd:       cmd,
-		startedBy: req.RequestedBy,
-	}
+	process := newProcess(req.Command, cmd, req.RequestedBy)
 
 	err = process.Start()
 	if err != nil {
@@ -96,7 +92,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 	}
 
 	processHandle := &ProcessHandle{
-		exec:          &process,
+		process:       process,
 		outputHandler: outputHandler,
 	}
 
@@ -107,7 +103,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 // getExec extracts an Exec instance from the process registry
 func (w *Worker) getExec(processId ID) (Exec, error) {
 	if handle, ok := w.getFromRegistry(processId); ok {
-		return handle.exec, nil
+		return handle.process, nil
 	}
 	return nil, fmt.Errorf("no process with ID %s", processId)
 }
@@ -152,5 +148,5 @@ func (w *Worker) GetProcessStatus(processId ID) (*ProcessStatus, error) {
 // can be used to stream the combined stdout and stderr of
 // a process managed by the worker
 func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, chan error) {
-	return w.processRegistry[processId].outputHandler.AddListener()
+	return w.processRegistry[processId].outputHandler.Stream()
 }

@@ -9,6 +9,10 @@ import (
 )
 
 // Exec represents something to be executed in the Worker
+// TODO: I might just remove this interface in the next
+// PR. I introduced it thinking it could be useful for
+// the future cgroup implementation but now am not so
+// sure.
 type Exec interface {
 	// Command is the command for the exec.
 	Command() string
@@ -24,12 +28,23 @@ type Exec interface {
 	Status() (*ProcessStatus, error)
 }
 
-type Process struct {
+// process is a process executed or to be executed by the worker
+// TODO: Find a better name for this as the word "process" implies
+// that this it is already running.
+type process struct {
 	command    string
 	cmd        *exec.Cmd
 	startedBy  string
 	startedAt  time.Time
-	finishedAt time.Time
+	finishedAt time.Time // TODO: implement finished at
+}
+
+func newProcess(command string, cmd *exec.Cmd, startedBy string) *process {
+	return &process{
+		command:   command,
+		cmd:       cmd,
+		startedBy: startedBy,
+	}
 }
 
 // ProcessStatus represents a snapshot of a process status
@@ -38,12 +53,11 @@ type ProcessStatus struct {
 	StartedBy  string
 	State      string
 	StartedAt  time.Time
-	FinishedAt time.Time
+	FinishedAt time.Time // TODO: implement finished at
 }
 
-func (p *Process) Start() error {
+func (p *process) Start() error {
 	p.startedAt = time.Now()
-	fmt.Println(p.startedAt)
 	err := p.cmd.Start()
 	if err != nil {
 		return err
@@ -51,25 +65,25 @@ func (p *Process) Start() error {
 	return nil
 }
 
-func (p *Process) Stop() error {
+func (p *process) Stop() error {
 	if p.cmd.Process == nil {
 		return fmt.Errorf("process not started")
 	}
 	return p.cmd.Process.Kill()
 }
 
-func (p *Process) Command() string {
+func (p *process) Command() string {
 	return p.command
 }
 
-func (p *Process) PID() int {
+func (p *process) PID() int {
 	if p.cmd.Process == nil {
 		return 0
 	}
 	return p.cmd.Process.Pid
 }
 
-func (p *Process) Status() (*ProcessStatus, error) {
+func (p *process) Status() (*ProcessStatus, error) {
 	if p.cmd.Process == nil {
 		return nil, fmt.Errorf("process not started")
 	}
@@ -90,6 +104,8 @@ func (p *Process) Status() (*ProcessStatus, error) {
 
 // retrieveProcessState retrieves the Linux process state i.e.
 // one of R, D, S, T or Z.
+// TODO: this could belong to its own internal os package but for now I think
+// it is fine here.
 func retrieveProcessState(pid int) (string, error) {
 	statPath := fmt.Sprintf("/proc/%d/stat", pid)
 	dataBytes, err := ioutil.ReadFile(statPath)
