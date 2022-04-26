@@ -163,3 +163,6 @@ func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, cha
 	outChan, errChan := outputHandler.Stream()
 	return outChan, errChan, nil
 }
+
+// TODO: Add a shutdown method so that clients can gracefully terminate all
+// processes.
