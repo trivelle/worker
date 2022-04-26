@@ -12,6 +12,7 @@ import (
 // Worker is a Linux process manager
 // It keeps a registry of processes that have been requested
 // and exposes methods to manage those.
+// TODO: add logging to give some observability on worker's actions
 type Worker struct {
 	processRegistry map[ID]*ProcessHandle
 	mu              *sync.RWMutex
