@@ -223,8 +223,11 @@ type ResourceLimits struct {
 
 // ProcessRequest represents a request to execute a Linux process in the worker
 type ProcessRequest struct {
-	// Command is the command executed to be executed together with its arguments
+	// Command is the command executed to be executed
 	Command string
+	
+	// Args are the arguments for the command
+	Args []string
 
 	// ResourceLimits specifies the resources that the process will have access to
 	// These translate to cgroup interface files configuration.

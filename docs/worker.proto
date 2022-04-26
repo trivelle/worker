@@ -19,10 +19,11 @@ service ProcessService {
 }
 
 message StartProcessRequest {
-  // Command is the command to be executed together with its arguments
-  // For example, "go run cmd/main.go"
+  // Command is the command to be executed
   string Command = 1;
-  ResourceAllocation ResourceAllocation = 2;
+  // Args are the arguments for the commands
+  repeated string Args = 2;
+  ResourceAllocation ResourceAllocation = 3;
 }
 
 message StartProcessResponse {
