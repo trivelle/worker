@@ -88,43 +88,40 @@ func NewOutputHandler(rc ...io.Reader) (*OutputHandler, error) {
 // Any errors encountered during output reading are sent through
 // the errors channel.
 func (o *OutputHandler) Stream() (<-chan ProcessOutputEntry, <-chan error) {
-	output := make(chan ProcessOutputEntry)
-	errChan := make(chan error)
-
-	go func() {
-		if o.bufferLen() > 0 {
-			output <- ProcessOutputEntry{Content: o.combinedBuffer}
-		}
-		select {
-		case <-o.done:
-			close(output)
-		default:
-			o.addListener(&Listener{
-				outputChan: output,
-				errorChan:  errChan,
-			})
-		}
-	}()
-
-	return output, errChan
+	return o.addListener()
 }
 
-func (o *OutputHandler) addListener(newListener *Listener) {
+// addListener registers a new listener in the output handler and returns
+// channels that get all previous output and stream new output.
+// The whole operation is behind a lock as this cannot happen at the same
+// time as listeners are sent new output or the buffer is being updated.
+func (o *OutputHandler) addListener() (chan ProcessOutputEntry, chan error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	o.listeners = append(o.listeners, newListener)
+	// we are going to be sending the existing output entry which is at
+	// most one item
+	output := make(chan ProcessOutputEntry, 1)
+	errChan := make(chan error)
+
+	if len(o.combinedBuffer) > 0 {
+		output <- ProcessOutputEntry{Content: o.combinedBuffer}
+	}
+	select {
+	case <-o.done:
+		close(output)
+	default:
+		o.listeners = append(o.listeners, &Listener{
+			outputChan: output,
+			errorChan:  errChan,
+		})
+	}
+	return output, errChan
 }
 
 func (o *OutputHandler) updateCombinedBuffer(b []byte) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	o.combinedBuffer = append(o.combinedBuffer, b...)
-}
-
-func (o *OutputHandler) bufferLen() int {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	return len(o.combinedBuffer)
 }
 
 func (o *OutputHandler) iterListeners(routine func(*Listener)) {
