@@ -152,7 +152,7 @@ func (w *Worker) GetProcessStatus(processId ID) (*ProcessStatus, error) {
 // StreamProcessOutput returns an instance of a Streamer that
 // can be used to stream the combined stdout and stderr of
 // a process managed by the worker
-func (w *Worker) StreamProcessOutput(processId ID) (chan ProcessOutputEntry, chan error, error) {
+func (w *Worker) StreamProcessOutput(processId ID) (<-chan ProcessOutputEntry, <-chan error, error) {
 	outputHandler, err := w.getOutputHandler(processId)
 	if err != nil {
 		return nil, nil, err
