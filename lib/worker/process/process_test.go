@@ -3,6 +3,7 @@ package process
 import (
 	"os/exec"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,7 +54,7 @@ func TestProcessStartMultipleTimesConcurrent(t *testing.T) {
 
 	process := NewProcess(cmd, "some_user")
 
-	errorsCountActual := 0
+	var errorsCountActual int64
 	errorsCountExpected := 9
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -61,13 +62,13 @@ func TestProcessStartMultipleTimesConcurrent(t *testing.T) {
 		go func() {
 			err := process.Start()
 			if err != nil {
-				errorsCountActual++
+				atomic.AddInt64(&errorsCountActual, 1)
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, errorsCountExpected, errorsCountActual, "all but one Start calls should have failed")
+	assert.Equal(t, errorsCountExpected, int(errorsCountActual), "all but one Start calls should have failed")
 }
 
 func TestProcessRestartAfterStop(t *testing.T) {
@@ -118,7 +119,7 @@ func TestProcessStopMultipleTimesConcurrent(t *testing.T) {
 	err := process.Start()
 	assert.Nil(t, err)
 
-	errorsCountActual := 0
+	var errorsCountActual int64
 	errorsCountExpected := 0
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -126,11 +127,11 @@ func TestProcessStopMultipleTimesConcurrent(t *testing.T) {
 		go func() {
 			err := process.Stop()
 			if err != nil {
-				errorsCountActual++
+				atomic.AddInt64(&errorsCountActual, 1)
 			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
-	assert.Equal(t, errorsCountExpected, errorsCountActual, "no stop calls should fail")
+	assert.Equal(t, errorsCountExpected, int(errorsCountActual), "no stop calls should fail")
 }
