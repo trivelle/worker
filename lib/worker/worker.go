@@ -75,7 +75,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 		return "", err
 	}
 
-	process := process.NewProcess(req.Command, cmd, req.RequestedBy)
+	process := process.NewProcess(cmd, req.RequestedBy)
 
 	err = process.Start()
 	if err != nil {

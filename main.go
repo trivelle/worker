@@ -47,6 +47,8 @@ func main() {
 
 func printInfo(info *process.ProcessStatus) {
 	fmt.Printf("pid: %v\n", info.PID)
+	fmt.Printf("command: %v\n", info.Command)
+	fmt.Printf("exit_code: %v\n", info.ExitCode)
 	fmt.Printf("started_by: %s\n", info.StartedBy)
 
 	state := info.State

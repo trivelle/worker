@@ -13,7 +13,6 @@ import (
 // TODO: Find a better name for this as the word "Process" implies
 // that this it is already running.
 type Process struct {
-	command    string
 	cmd        *exec.Cmd
 	startedBy  string
 	startedAt  time.Time
@@ -21,9 +20,8 @@ type Process struct {
 	mu         sync.Mutex
 }
 
-func NewProcess(command string, cmd *exec.Cmd, startedBy string) *Process {
+func NewProcess(cmd *exec.Cmd, startedBy string) *Process {
 	return &Process{
-		command:   command,
 		cmd:       cmd,
 		startedBy: startedBy,
 		mu:        sync.Mutex{},
@@ -35,6 +33,8 @@ type ProcessStatus struct {
 	PID        int
 	StartedBy  string
 	State      string
+	Command    []string // conrains the command and args
+	ExitCode   int
 	StartedAt  time.Time
 	FinishedAt time.Time // TODO: implement finished at
 }
@@ -69,11 +69,6 @@ func (p *Process) Stop() error {
 	return p.cmd.Process.Kill()
 }
 
-// Command returns the command of the process
-func (p *Process) Command() string {
-	return p.command
-}
-
 func (p *Process) getPid() int {
 	if p.cmd.Process == nil {
 		return 0
@@ -95,6 +90,8 @@ func (p *Process) GetProcessStatus() (*ProcessStatus, error) {
 
 	return &ProcessStatus{
 		PID:        pid,
+		Command:    p.cmd.Args,
+		ExitCode:   p.cmd.ProcessState.ExitCode(),
 		StartedBy:  p.startedBy,
 		State:      state,
 		StartedAt:  p.startedAt,
