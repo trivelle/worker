@@ -126,12 +126,10 @@ func (o *OutputHandler) updateCombinedBuffer(b []byte) {
 	o.combinedBuffer = append(o.combinedBuffer, b...)
 }
 
-func (o *OutputHandler) iterListeners(routine func(*Listener)) {
+func (o *OutputHandler) getListeners() []*Listener {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	for _, l := range o.listeners {
-		routine(l)
-	}
+	return o.listeners[:len(o.listeners)]
 }
 
 // handleBroadcast forwads new messages to the listeners and
@@ -142,13 +140,14 @@ L:
 	for {
 		select {
 		case msg := <-o.messages:
-			o.iterListeners(func(l *Listener) {
+			for _, l := range o.getListeners() {
 				l.outputChan <- ProcessOutputEntry{Content: msg}
-			})
+			}
+			o.updateCombinedBuffer(msg)
 		case <-o.done:
-			o.iterListeners(func(l *Listener) {
+			for _, l := range o.getListeners() {
 				close(l.outputChan)
-			})
+			}
 			break L
 		}
 	}
@@ -160,9 +159,9 @@ L:
 	for {
 		select {
 		case err := <-o.errors:
-			o.iterListeners(func(l *Listener) {
+			for _, l := range o.getListeners() {
 				l.errorChan <- err
-			})
+			}
 			break L
 		}
 	}
@@ -214,7 +213,6 @@ func (o *OutputHandler) bufferAndForwardChunks(reader io.Reader) {
 			}
 		}
 
-		o.updateCombinedBuffer(buf)
 		o.messages <- buf
 	}
 }
