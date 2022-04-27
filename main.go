@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/trivelle/worker/lib/worker"
+	"github.com/trivelle/worker/lib/worker/process"
 )
 
 func main() {
@@ -44,7 +45,7 @@ func main() {
 	wg.Wait()
 }
 
-func printInfo(info *worker.ProcessStatus) {
+func printInfo(info *process.ProcessStatus) {
 	fmt.Printf("pid: %v\n", info.PID)
 	fmt.Printf("started_by: %s\n", info.StartedBy)
 

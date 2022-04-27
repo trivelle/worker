@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/trivelle/worker/lib/worker/process"
 )
 
 // Worker is a Linux process manager
@@ -49,7 +50,7 @@ type ID string
 
 // ProcessHandle is a record of a process running in the worker
 type ProcessHandle struct {
-	process       Exec
+	process       *process.Process
 	outputHandler *OutputHandler
 }
 
@@ -74,7 +75,7 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 		return "", err
 	}
 
-	process := newProcess(req.Command, cmd, req.RequestedBy)
+	process := process.NewProcess(req.Command, cmd, req.RequestedBy)
 
 	err = process.Start()
 	if err != nil {
@@ -97,8 +98,8 @@ func (w *Worker) StartProcess(req ProcessRequest) (ID, error) {
 	return id, nil
 }
 
-// getExec extracts an Exec instance from the process registry
-func (w *Worker) getExec(processId ID) (Exec, error) {
+// getProcess extracts an *Process instance from the process registry
+func (w *Worker) getProcess(processId ID) (*process.Process, error) {
 	if handle, ok := w.getFromRegistry(processId); ok {
 		return handle.process, nil
 	}
@@ -132,21 +133,21 @@ func (w *Worker) getFromRegistry(processId ID) (*ProcessHandle, bool) {
 // Returns an error if errors are encountered stopping the process
 // or the process does not exist in the worker registry.
 func (w *Worker) StopProcess(processId ID) error {
-	exec, err := w.getExec(processId)
+	proc, err := w.getProcess(processId)
 	if err != nil {
 		return err
 	}
-	return exec.Stop()
+	return proc.Stop()
 }
 
-// GetProcessStatus gives access to the ProcessInfo interface
-// which allows querying for information about the process.
-func (w *Worker) GetProcessStatus(processId ID) (*ProcessStatus, error) {
-	exec, err := w.getExec(processId)
+// GetProcessStatus gives access to the ProcessStatus struct
+// which provides a point in time view of the process status.
+func (w *Worker) GetProcessStatus(processId ID) (*process.ProcessStatus, error) {
+	proc, err := w.getProcess(processId)
 	if err != nil {
 		return nil, err
 	}
-	return exec.Status()
+	return proc.GetProcessStatus()
 }
 
 // StreamProcessOutput returns an instance of a Streamer that
